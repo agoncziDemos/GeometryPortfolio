@@ -1,0 +1,115 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Andrew Gonczi - Geometry / 3D Software Portfolio</title>
+  <meta
+    name="description"
+    content="Selected geometry, 3D software, C++/WebAssembly, and manufacturing-adjacent portfolio projects by Andrew Gonczi."
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">Andrew Gonczi</p>
+      <h1>Geometry / 3D Software Portfolio</h1>
+      <p class="intro">
+        Selected browser-based projects focused on computational geometry, 3D software,
+        C++/WebAssembly, and manufacturing-adjacent workflows. These demos are small, but
+        they reflect the kinds of systems I like building: interactive geometry tools,
+        performance-sensitive algorithms, and software that connects mathematical and
+        geometric logic to practical workflows.
+      </p>
+    </header>
+
+    <section class="projects" aria-label="Selected projects">
+      <article class="project-card">
+        <div class="project-header">
+          <h2>MeshSlicer</h2>
+          <p class="project-type">STL slicing / 3D printing workflow</p>
+        </div>
+
+        <p>
+          Browser-based STL slicer with TypeScript and C++/WebAssembly implementations,
+          live plane-slice preview, and PNG layer-stack export.
+        </p>
+
+        <p>
+          This project is the most directly related to 3D printing workflows: it takes a
+          triangle mesh, slices it into layers, and exposes the result interactively in the
+          browser. It was built to show geometry-processing logic, browser-based 3D tooling,
+          and the difference between a TypeScript implementation and a compiled C++/WASM
+          backend.
+        </p>
+
+        <div class="links">
+          <a href="https://agonczidemos.github.io/MeshSlicer/">Live demo</a>
+          <a href="https://github.com/agoncziDemos/MeshSlicer">GitHub</a>
+        </div>
+
+        <p class="tags">STL · slicing · C++/WASM · TypeScript · 3D printing · geometry processing</p>
+      </article>
+
+      <article class="project-card">
+        <div class="project-header">
+          <h2>MeshViewerGL</h2>
+          <p class="project-type">WebGL2 mesh viewer / geometry inspection</p>
+        </div>
+
+        <p>
+          Custom WebGL2 STL viewer with orbit/pan/zoom controls, shader modes, mesh overlays,
+          and interactive geometry inspection.
+        </p>
+
+        <p>
+          This project focuses on lower-level 3D graphics and mesh visualization without
+          relying on Three.js. It shows direct work with WebGL2, STL parsing and visualization,
+          camera controls, rendering modes, and the kind of interactive tooling needed to
+          inspect and debug geometric data.
+        </p>
+
+        <div class="links">
+          <a href="https://agonczidemos.github.io/MeshViewerGL/">Live demo</a>
+          <a href="https://github.com/agoncziDemos/MeshViewerGL">GitHub</a>
+        </div>
+
+        <p class="tags">WebGL2 · STL viewer · 3D graphics · mesh visualization · interactive geometry</p>
+      </article>
+
+      <article class="project-card">
+        <div class="project-header">
+          <h2>BoardRoute</h2>
+          <p class="project-type">C++/WASM routing / constrained path planning</p>
+        </div>
+
+        <p>
+          C++/WebAssembly A* routing demo for constrained 2D board geometry, with clearance,
+          bend, and via-style costs.
+        </p>
+
+        <p>
+          This project demonstrates algorithmic path planning over geometric constraints.
+          The routing core is compiled to WebAssembly and exposed through a browser UI,
+          showing how compiled C++ logic can drive an interactive frontend for search,
+          routing, and constraint-based layout problems.
+        </p>
+
+        <div class="links">
+          <a href="https://agonczidemos.github.io/BoardRoute/">Live demo</a>
+          <a href="https://github.com/agoncziDemos/BoardRoute">GitHub</a>
+        </div>
+
+        <p class="tags">C++/WASM · A* · path planning · geometry constraints · routing · browser visualization</p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <a href="mailto:andrewgoenczi@gmail.com">andrewgoenczi@gmail.com</a>
+      <span>·</span>
+      <a href="https://github.com/agoncziDemos">GitHub</a>
+    </footer>
+  </main>
+</body>
+</html>
