@@ -1,25 +1,31 @@
-﻿const canvas = document.getElementById("geometry-canvas");
+﻿const canvas =
+  document.getElementById("geometry-canvas") ||
+  document.getElementById("scene");
+
 const ctx = canvas.getContext("2d");
 
 let width = 0;
 let height = 0;
+let activeIndex = 0;
+let visualIndex = 0;
 let mouseX = 0.5;
 let mouseY = 0.5;
+let lastWheelAt = 0;
 
-let camera = 0;
-let visualCamera = 0;
-let wheelBuffer = 0;
-let snapTimer = null;
-
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const cards = Array.from(document.querySelectorAll(".project-card"));
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+document.querySelectorAll(".links a").forEach((link) => {
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+});
 
 const objects = [
   {
     points: [
       [-140, -80, 0], [140, -80, 0], [140, 80, 0], [-140, 80, 0],
-      [-105, -52, 80], [105, -52, 80], [105, 52, 80], [-105, 52, 80],
-      [-70, -24, 150], [70, -24, 150], [70, 24, 150], [-70, 24, 150],
+      [-105, -52, 85], [105, -52, 85], [105, 52, 85], [-105, 52, 85],
+      [-70, -24, 160], [70, -24, 160], [70, 24, 160], [-70, 24, 160],
     ],
     edges: [
       [0, 1], [1, 2], [2, 3], [3, 0],
@@ -33,7 +39,7 @@ const objects = [
     points: [
       [-120, -120, -120], [120, -120, -120], [120, 120, -120], [-120, 120, -120],
       [-120, -120, 120], [120, -120, 120], [120, 120, 120], [-120, 120, 120],
-      [0, -170, 0], [170, 0, 0], [0, 170, 0], [-170, 0, 0],
+      [0, -175, 0], [175, 0, 0], [0, 175, 0], [-175, 0, 0],
     ],
     edges: [
       [0, 1], [1, 2], [2, 3], [3, 0],
@@ -48,8 +54,8 @@ const objects = [
       [-175, -85, 0], [-90, -85, 0], [-90, 0, 0], [0, 0, 0],
       [0, 78, 0], [100, 78, 0], [100, -38, 0], [175, -38, 0],
       [-175, 90, 0], [-45, 90, 0], [45, -90, 0], [175, -90, 0],
-      [-175, -85, 80], [-90, -85, 80], [-90, 0, 80], [0, 0, 80],
-      [0, 78, 80], [100, 78, 80], [100, -38, 80], [175, -38, 80],
+      [-175, -85, 85], [-90, -85, 85], [-90, 0, 85], [0, 0, 85],
+      [0, 78, 85], [100, 78, 85], [100, -38, 85], [175, -38, 85],
     ],
     edges: [
       [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7],
@@ -72,16 +78,16 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function loopRelative(index, position) {
-  const loop = objects.length;
-  const copy = Math.round((position - index) / loop);
-  return index + copy * loop - position;
+function relativeToCamera(index) {
+  const count = cards.length;
+  const copy = Math.round((visualIndex - index) / count);
+  return index + copy * count - visualIndex;
 }
 
 function rotatePoint([x, y, z], time, rel) {
-  const rx = time * 0.00038 + rel * 0.45;
-  const ry = time * 0.00062 + mouseX * 0.35 + rel * 0.32;
-  const rz = mouseY * 0.16 + rel * 0.08;
+  const rx = time * 0.00035 + rel * 0.42;
+  const ry = time * 0.00058 + mouseX * 0.28 + rel * 0.28;
+  const rz = mouseY * 0.14 + rel * 0.08;
 
   let py = y * Math.cos(rx) - z * Math.sin(rx);
   let pz = y * Math.sin(rx) + z * Math.cos(rx);
@@ -108,22 +114,20 @@ function projectPoint([x, y, z], centerX, centerY, scaleBase) {
   };
 }
 
-function drawSceneRail() {
-  const x = width > 900 ? width * 0.8 : width * 0.5;
-  const top = height * 0.12;
-  const bottom = height * 0.88;
+function drawRail() {
+  const x = width > 900 ? width * 0.78 : width * 0.5;
 
-  ctx.strokeStyle = "rgba(120, 205, 255, 0.12)";
+  ctx.strokeStyle = "rgba(145, 217, 255, 0.12)";
   ctx.lineWidth = 1;
 
   ctx.beginPath();
-  ctx.moveTo(x - 34, top);
-  ctx.bezierCurveTo(x + 42, height * 0.34, x - 42, height * 0.66, x + 34, bottom);
+  ctx.moveTo(x - 44, height * 0.12);
+  ctx.bezierCurveTo(x + 50, height * 0.34, x - 50, height * 0.66, x + 44, height * 0.88);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(x + 34, top);
-  ctx.bezierCurveTo(x - 42, height * 0.34, x + 42, height * 0.66, x - 34, bottom);
+  ctx.moveTo(x + 44, height * 0.12);
+  ctx.bezierCurveTo(x - 50, height * 0.34, x + 50, height * 0.66, x - 44, height * 0.88);
   ctx.stroke();
 }
 
@@ -135,11 +139,10 @@ function drawObject(object, rel, time) {
   }
 
   const focus = 1 - Math.min(distance, 1);
-  const baseX = width > 900 ? width * 0.8 : width * 0.5;
-  const centerX = baseX + Math.sin(rel * Math.PI * 0.72) * (width > 900 ? 88 : 42);
+  const baseX = width > 900 ? width * 0.78 : width * 0.5;
+  const centerX = baseX + Math.sin(rel * Math.PI * 0.72) * (width > 900 ? 92 : 42);
   const centerY = height * 0.5 + rel * height * 0.34;
-  const depthScale = 1 - distance * 0.16;
-  const scaleBase = (width > 900 ? 0.82 : 0.58) * depthScale * (0.92 + focus * 0.28);
+  const scaleBase = (width > 900 ? 0.82 : 0.58) * (0.82 + focus * 0.38);
   const alpha = 0.2 + focus * 0.58;
 
   const projected = object.points.map((point) =>
@@ -147,7 +150,7 @@ function drawObject(object, rel, time) {
   );
 
   ctx.lineWidth = 1.1 + focus * 1.7;
-  ctx.strokeStyle = `rgba(120, 205, 255, ${alpha})`;
+  ctx.strokeStyle = `rgba(145, 217, 255, ${alpha})`;
 
   for (const [a, b] of object.edges) {
     ctx.beginPath();
@@ -156,41 +159,38 @@ function drawObject(object, rel, time) {
     ctx.stroke();
   }
 
-  ctx.fillStyle = `rgba(190, 235, 255, ${0.2 + focus * 0.6})`;
+  ctx.fillStyle = `rgba(205, 240, 255, ${0.2 + focus * 0.55})`;
 
   for (const p of projected) {
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 2 + focus * 1.9, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 2 + focus * 1.8, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
 function updateCards() {
-  const activeIndex = ((Math.round(camera) % cards.length) + cards.length) % cards.length;
-
   cards.forEach((card, index) => {
-    const rel = loopRelative(index, visualCamera);
+    const rel = relativeToCamera(index);
     const distance = Math.abs(rel);
 
     card.classList.toggle("active", index === activeIndex);
     card.classList.toggle("above", rel < -0.05);
-    card.classList.toggle("below", rel > 0.05);
 
-    card.style.opacity = Math.max(0, 1 - distance * 3.6).toString();
-    card.style.pointerEvents = distance < 0.18 ? "auto" : "none";
-    card.style.transform = `translateY(${rel * height * 0.78}px) scale(${1 - Math.min(distance, 1) * 0.03})`;
+    card.style.opacity = Math.max(0, 1 - distance * 3.2).toString();
+    card.style.pointerEvents = index === activeIndex ? "auto" : "none";
+    card.style.transform = `translateY(${rel * height * 0.82}px) scale(${1 - Math.min(distance, 1) * 0.035})`;
   });
 }
 
 function animate(time = 0) {
   ctx.clearRect(0, 0, width, height);
 
-  visualCamera += (camera - visualCamera) * 0.2;
+  visualIndex += (activeIndex - visualIndex) * 0.2;
 
-  drawSceneRail();
+  drawRail();
 
   objects.forEach((object, index) => {
-    drawObject(object, loopRelative(index, visualCamera), time);
+    drawObject(object, relativeToCamera(index), time);
   });
 
   updateCards();
@@ -200,12 +200,16 @@ function animate(time = 0) {
   }
 }
 
-function handleWheel(deltaY) {
-  if (Math.abs(deltaY) < 2) {
-    return;
+function cycle(direction) {
+  activeIndex = (activeIndex + direction + cards.length) % cards.length;
+
+  if (direction > 0 && visualIndex > cards.length - 1.2 && activeIndex === 0) {
+    visualIndex -= cards.length;
   }
 
-  camera = Math.round(camera) + (deltaY > 0 ? 1 : -1);
+  if (direction < 0 && visualIndex < 0.2 && activeIndex === cards.length - 1) {
+    visualIndex += cards.length;
+  }
 }
 
 window.addEventListener("resize", resize);
@@ -219,21 +223,28 @@ window.addEventListener(
   "wheel",
   (event) => {
     event.preventDefault();
-    handleWheel(event.deltaY);
+
+    const now = Date.now();
+
+    if (now - lastWheelAt < 220 || Math.abs(event.deltaY) < 2) {
+      return;
+    }
+
+    lastWheelAt = now;
+    cycle(event.deltaY > 0 ? 1 : -1);
   },
   { passive: false }
 );
 
 window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowDown" || event.key === "ArrowRight") {
-    camera = Math.round(camera) + 1;
+    cycle(1);
   }
 
   if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-    camera = Math.round(camera) - 1;
+    cycle(-1);
   }
 });
 
 resize();
 animate();
-
